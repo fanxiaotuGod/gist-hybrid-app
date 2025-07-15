@@ -1,0 +1,21 @@
+{
+  "name": "ui",
+  "version": "0.0.0",
+  "main": "./src/index.tsx",
+  "types": "./src/index.tsx",
+  "license": "MIT",
+  "scripts": {
+    "lint": "eslint . --ext .ts,.tsx"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "typescript": "^5.3.3"
+  },
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*",
+    "@expo/vector-icons": "*",
+    "expo-linear-gradient": "*",
+    "expo-blur": "*"
+  }
+} 

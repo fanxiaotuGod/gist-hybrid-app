@@ -1,0 +1,13 @@
+{
+  "name": "gist-hybrid-app",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "web": "npm run dev -w web",
+    "native": "npm start -w native"
+  },
+  "devDependencies": {}
+} 
