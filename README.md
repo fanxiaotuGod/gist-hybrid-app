@@ -19,6 +19,7 @@ Since I'm only building one page, not a full app, I put most of the code in `pac
 3. Built the layout structure first
 4. Added the visual styling (gradients, glassmorphism effect)
 5. Made buttons functional with local data (no backend needed)
+6. Tests on different simulators web/ios/android to modify CSS styles.
 
 The tricky part was making React Native components work on web, but `react-native-web` handles most of it automatically.
 
@@ -39,12 +40,13 @@ Opens at `http://localhost:3000`
 ```bash
 npm run native
 ```
-Then press `i` to open iOS simulator.
-
-*Note: Only tested on iOS. Android might need extra setup.*
+Then press `i` to open the iOS simulator. (iPhone 16 Plus)
+Then press `a` to for Android simulator. (Medium Phone API 35, Android 15.0 VanillalceCream|arm64)
 
 ## What I Learned
 
 The hybrid approach works well when you want to share UI logic between platforms. Instead of building separate apps, you write components once and they run everywhere. Perfect for simple interfaces like this news card.
 
 The key insight: put shared code in `packages/`, platform-specific stuff in `apps/`.
+
+## 

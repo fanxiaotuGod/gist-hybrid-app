@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, SafeAreaView, Share, Platform, Linking } from 'react-native';
+import { View, Text, SafeAreaView, Share, Platform, Linking, StatusBar } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { NewsCardProps, NewsItem } from './types';
@@ -153,75 +153,99 @@ export const NewsCard: React.FC<NewsCardProps> = ({ onGoBack }) => {
 
   if (showWebView && Platform.OS !== 'web') {
     return (
-        <WebViewScreen
-            newsItem={currentNews}
-            onGoBack={handleWebViewGoBack}
-        />
+      <WebViewScreen
+        newsItem={currentNews}
+        onGoBack={handleWebViewGoBack}
+      />
     );
   }
 
   return (
-      <View style={styles.fullScreen}>
-        <LinearGradient
-            colors={[
-              'rgba(0,0,0,0.6)',
-              'rgba(0,0,0,0.7)',
-              'rgba(0,0,0,0.85)',
-              'rgba(0,0,0,0.95)',
-            ]}
-            style={styles.fullScreen}
-        >
+    <View style={styles.fullScreen}>
+      {/* Configure status bar for Android */}
+      {Platform.OS === 'android' && (
+        <StatusBar
+          barStyle="light-content"
+          backgroundColor="transparent"
+          translucent={true}
+        />
+      )}
+      <LinearGradient
+        colors={[
+          'rgba(0,0,0,0.6)',
+          'rgba(0,0,0,0.7)',
+          'rgba(0,0,0,0.85)',
+          'rgba(0,0,0,0.95)',
+        ]}
+        style={styles.fullScreen}
+      >
+        {/* Use SafeAreaView for iOS, regular View for Android */}
+        {Platform.OS === 'ios' ? (
           <SafeAreaView style={styles.fullScreen}>
             <View style={styles.container}>
-              {/* Selection bars - Fixed position */}
-              <View style={styles.selectionBars}>
-                {newsData.map((_, index) => (
-                    <View
-                        key={index}
-                        style={[
-                          styles.selectionBar,
-                          index === currentIndex ? styles.activeBar : styles.inactiveBar
-                        ]}
-                    />
-                ))}
-              </View>
-
-              {/* Header - Fixed position */}
-              <View style={styles.header}>
-                <Text
-                    style={styles.newsSource}
-                    numberOfLines={1}
-                    ellipsizeMode="tail"
-                >
-                  {currentNews.newsSource}
-                </Text>
-                <View style={styles.headerIcons}>
-                  <Feather name="more-horizontal" size={24} color="white" />
-                  <Feather name="x" size={24} color="white" style={{ marginLeft: 16 }} />
-                </View>
-              </View>
-
-              {/* Animated Card Content - Only this moves */}
-              <AnimatedCardContent
-                  newsItem={currentNews}
-                  isLiked={isLiked}
-                  onLikePress={handleLikePress}
-                  onFollowPress={handleFollowPress}
-                  onSharePress={handleSharePress}
-                  currentIndex={currentIndex}
-                  setCurrentIndex={setCurrentIndex}
-                  maxIndex={newsData.length}
-              />
-
-              {/* Swipe indicator - Fixed position */}
-              <View style={styles.swipeIndicator}>
-                <Text style={styles.swipeText}>
-                  {currentIndex + 1} of {newsData.length} • Swipe to see more news
-                </Text>
-              </View>
+              {renderContent()}
             </View>
           </SafeAreaView>
-        </LinearGradient>
-      </View>
+        ) : (
+          <View style={styles.container}>
+            {renderContent()}
+          </View>
+        )}
+      </LinearGradient>
+    </View>
   );
+
+  // Helper function to render the main content
+  function renderContent() {
+    return (
+      <>
+        {/* Selection bars - Fixed position */}
+        <View style={styles.selectionBars}>
+          {newsData.map((_, index) => (
+            <View
+              key={index}
+              style={[
+                styles.selectionBar,
+                index === currentIndex ? styles.activeBar : styles.inactiveBar
+              ]}
+            />
+          ))}
+        </View>
+
+        {/* Header - Fixed position */}
+        <View style={styles.header}>
+          <Text
+            style={styles.newsSource}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {currentNews.newsSource}
+          </Text>
+          <View style={styles.headerIcons}>
+            <Feather name="more-horizontal" size={24} color="white" />
+            <Feather name="x" size={24} color="white" style={{ marginLeft: 16 }} />
+          </View>
+        </View>
+
+        {/* Animated Card Content - Only this moves */}
+        <AnimatedCardContent
+          newsItem={currentNews}
+          isLiked={isLiked}
+          onLikePress={handleLikePress}
+          onFollowPress={handleFollowPress}
+          onSharePress={handleSharePress}
+          currentIndex={currentIndex}
+          setCurrentIndex={setCurrentIndex}
+          maxIndex={newsData.length}
+        />
+
+        {/* Swipe indicator - Fixed position */}
+        <View style={styles.swipeIndicator}>
+          <Text style={styles.swipeText}>
+            {currentIndex + 1} of {newsData.length} • Swipe to see more news
+          </Text>
+        </View>
+      </>
+    );
+  }
 };
