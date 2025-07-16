@@ -1,39 +1,50 @@
-# Gist Hybrid App - Quick Start Guide
+# Gist Hybrid App
 
-This project is a hybrid application built with Next.js (Web) and Expo (Mobile).
+A news card app that runs on both web and mobile using shared components.
 
-## 1. Prerequisites
+## How I Built This
 
-- [Node.js](https://nodejs.org/en/) (LTS version)
-- `npm` (comes with Node.js)
+I wanted to understand how monorepo hybrid apps work, so I built this news card interface.
 
-## 2. Installation
+**The structure is simple:**
+- `apps/native/` - Expo app for mobile
+- `apps/web/` - Next.js app for web
+- `packages/ui/` - Shared components
 
-Navigate to the project's root directory and install all dependencies for both the web and mobile apps.
+Since I'm only building one page, not a full app, I put most of the code in `packages/ui/` so both platforms can use the same components.
 
+**My process:**
+1. Analyzed the design - full screen image, gradient overlay, card layout
+2. Broke it down into components - background, header, main card, buttons
+3. Built the layout structure first
+4. Added the visual styling (gradients, glassmorphism effect)
+5. Made buttons functional with local data (no backend needed)
+
+The tricky part was making React Native components work on web, but `react-native-web` handles most of it automatically.
+
+## How to Run
+
+**First time setup:**
 ```bash
-# Install all required packages
 npm install
 ```
 
-## 3. Running the Project
-
-You can run the web and mobile applications simultaneously.
-
-### To Run the Web App (Next.js):
-
-This will start the development server at `http://localhost:3000`.
-
+**For web:**
 ```bash
 npm run web
 ```
+Opens at `http://localhost:3000`
 
-### To Run the Mobile App (Expo):
-
-This will start the Expo development server and display a QR code in your terminal. Scan the QR code with the **Expo Go** app on your phone to see the mobile app.
-
+**For mobile:**
 ```bash
 npm run native
 ```
+Then press `i` to open iOS simulator.
 
-You can also press `a` or `i` in the terminal to run it on an Android or iOS simulator if you have one set up. 
+*Note: Only tested on iOS. Android might need extra setup.*
+
+## What I Learned
+
+The hybrid approach works well when you want to share UI logic between platforms. Instead of building separate apps, you write components once and they run everywhere. Perfect for simple interfaces like this news card.
+
+The key insight: put shared code in `packages/`, platform-specific stuff in `apps/`.
