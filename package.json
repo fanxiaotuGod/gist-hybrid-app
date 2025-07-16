@@ -9,5 +9,11 @@
     "web": "npm run dev -w web",
     "native": "npm start -w native"
   },
-  "devDependencies": {}
-} 
+  "dependencies": {
+    "nativewind": "^4.1.23",
+    "react-native-webview": "^13.15.0"
+  },
+  "devDependencies": {
+    "tailwindcss": "^4.1.11"
+  }
+}

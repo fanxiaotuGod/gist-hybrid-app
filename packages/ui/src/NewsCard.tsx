@@ -1,213 +1,227 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Platform, ImageBackground } from 'react-native';
-import { Feather, Entypo } from '@expo/vector-icons';
+import React, { useState } from 'react';
+import { View, Text, SafeAreaView, Share, Platform, Linking } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { NewsCardProps, NewsItem } from './types';
+import { newsData } from './newsData';
+import { styles } from './styles';
+import { AnimatedCardContent } from './AnimatedCardContent';
+import { WebViewScreen } from './WebViewScreen';
 
-type NewsCardProps = {
-  imageUrl: string;
-  title: string;
-  summary: string;
-  newsSource: string;
+// News card hook integrated into this file
+const useNewsCard = (currentNews: NewsItem, currentIndex: number) => {
+  // Track likes for each news item individually
+  const [likedItems, setLikedItems] = useState<Set<number>>(new Set());
+  const [showWebView, setShowWebView] = useState(false);
+
+  // Check if current news item is liked
+  const isLiked = likedItems.has(currentIndex);
+
+  const handleLikePress = () => {
+    setLikedItems(prev => {
+      const newLikedItems = new Set(prev);
+      if (newLikedItems.has(currentIndex)) {
+        // Unlike this item
+        newLikedItems.delete(currentIndex);
+      } else {
+        // Like this item (and unlike all others)
+        newLikedItems.clear();
+        newLikedItems.add(currentIndex);
+      }
+      return newLikedItems;
+    });
+  };
+
+  const handleSharePress = async () => {
+    const shareText = `${currentNews.title}\n\n${currentNews.summary}\n\nFrom: ${currentNews.newsSource}`;
+    const shareUrl = currentNews.websiteUrl;
+
+    if (Platform.OS === 'web') {
+      // Web-specific sharing
+      if (navigator.share) {
+        // Use Web Share API if available (modern browsers)
+        try {
+          await navigator.share({
+            title: currentNews.title,
+            text: currentNews.summary,
+            url: shareUrl,
+          });
+        } catch (error) {
+          console.log('Web Share API failed, falling back to clipboard');
+          // Fallback to clipboard
+          copyToClipboard(shareText + '\n' + shareUrl);
+        }
+      } else {
+        // Fallback: Copy to clipboard
+        copyToClipboard(shareText + '\n' + shareUrl);
+      }
+    } else {
+      // Mobile sharing (original functionality)
+      try {
+        const result = await Share.share({
+          message: shareText,
+          url: shareUrl,
+        });
+      } catch (error) {
+        console.error('Error sharing:', error);
+      }
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    if (Platform.OS === 'web') {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => {
+          alert('News story copied to clipboard!');
+        }).catch(() => {
+          // Fallback for older browsers
+          fallbackCopyToClipboard(text);
+        });
+      } else {
+        fallbackCopyToClipboard(text);
+      }
+    }
+  };
+
+  const fallbackCopyToClipboard = (text: string) => {
+    // Create a temporary textarea element
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+
+    try {
+      document.execCommand('copy');
+      alert('News story copied to clipboard!');
+    } catch (err) {
+      console.error('Fallback copy failed:', err);
+      alert('Could not copy to clipboard. Please copy manually.');
+    }
+
+    document.body.removeChild(textArea);
+  };
+
+  const handleFollowPress = () => {
+    if (Platform.OS === 'web') {
+      // Web: Open in new tab/window
+      window.open(currentNews.websiteUrl, '_blank');
+    } else {
+      // Mobile: Use WebView
+      setShowWebView(true);
+    }
+  };
+
+  const handleCloseWebView = () => {
+    setShowWebView(false);
+  };
+
+  return {
+    isLiked,
+    showWebView,
+    handleLikePress,
+    handleSharePress,
+    handleFollowPress,
+    handleCloseWebView,
+  };
 };
 
-export const NewsCard: React.FC<NewsCardProps> = ({ imageUrl, title, summary, newsSource }) => {
+export const NewsCard: React.FC<NewsCardProps> = ({ onGoBack }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const currentNews = newsData[currentIndex];
+
+  // Use the integrated news card hook
+  const {
+    isLiked,
+    showWebView,
+    handleLikePress,
+    handleSharePress,
+    handleFollowPress,
+    handleCloseWebView,
+  } = useNewsCard(currentNews, currentIndex);
+
+  // Handle going back from WebView
+  const handleWebViewGoBack = () => {
+    handleCloseWebView();
+    if (onGoBack) {
+      onGoBack();
+    }
+  };
+
+  if (showWebView && Platform.OS !== 'web') {
+    return (
+        <WebViewScreen
+            newsItem={currentNews}
+            onGoBack={handleWebViewGoBack}
+        />
+    );
+  }
+
   return (
-    <LinearGradient
-      colors={[
-        'rgba(0,0,0,0.6)',
-        'rgba(0,0,0,0.7)',
-        'rgba(0,0,0,0.85)',
-        'rgba(0,0,0,0.95)',
-      ]}
-      style={styles.fullScreen}
-    >
-      <SafeAreaView style={styles.fullScreen}>
-        <View style={styles.container}>
-          {/* Selection bars - same width as main card */}
-          <View style={styles.selectionBars}>
-            <View style={[styles.selectionBar, styles.activeBar]} />
-            <View style={[styles.selectionBar, styles.inactiveBar]} />
-            <View style={[styles.selectionBar, styles.inactiveBar]} />
-          </View>
+      <View style={styles.fullScreen}>
+        <LinearGradient
+            colors={[
+              'rgba(0,0,0,0.6)',
+              'rgba(0,0,0,0.7)',
+              'rgba(0,0,0,0.85)',
+              'rgba(0,0,0,0.95)',
+            ]}
+            style={styles.fullScreen}
+        >
+          <SafeAreaView style={styles.fullScreen}>
+            <View style={styles.container}>
+              {/* Selection bars - Fixed position */}
+              <View style={styles.selectionBars}>
+                {newsData.map((_, index) => (
+                    <View
+                        key={index}
+                        style={[
+                          styles.selectionBar,
+                          index === currentIndex ? styles.activeBar : styles.inactiveBar
+                        ]}
+                    />
+                ))}
+              </View>
 
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.newsSource}>{newsSource}</Text>
-            <View style={styles.headerIcons}>
-              <Feather name="more-horizontal" size={24} color="white" />
-              <Feather name="x" size={24} color="white" style={{ marginLeft: 16 }} />
-            </View>
-          </View>
-
-          {/* Main Content Card - Extended further down */}
-          <View style={styles.card}>
-            {/* Image with title overlay - takes half of card */}
-            <View style={styles.imageSection}>
-              <ImageBackground source={{ uri: imageUrl }} style={styles.imageContainer} imageStyle={styles.image}>
-                <LinearGradient
-                  colors={['transparent', 'rgba(0,0,0,0.8)']}
-                  style={styles.imageGradient}
+              {/* Header - Fixed position */}
+              <View style={styles.header}>
+                <Text
+                    style={styles.newsSource}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
                 >
-                  <View style={styles.titleContainer}>
-                    <Text style={styles.title}>{title}</Text>
-                  </View>
-                </LinearGradient>
-              </ImageBackground>
-            </View>
-            
-            {/* Content section - takes other half of card */}
-            <View style={styles.contentSection}>
-              <View style={styles.contentContainer}>
-                <Text style={styles.summary}>{summary}</Text>
-                <Text style={styles.attribution}>
-                  Summarized News Story by <Text style={styles.gist}>The Gist - AI News App</Text>
+                  {currentNews.newsSource}
+                </Text>
+                <View style={styles.headerIcons}>
+                  <Feather name="more-horizontal" size={24} color="white" />
+                  <Feather name="x" size={24} color="white" style={{ marginLeft: 16 }} />
+                </View>
+              </View>
+
+              {/* Animated Card Content - Only this moves */}
+              <AnimatedCardContent
+                  newsItem={currentNews}
+                  isLiked={isLiked}
+                  onLikePress={handleLikePress}
+                  onFollowPress={handleFollowPress}
+                  onSharePress={handleSharePress}
+                  currentIndex={currentIndex}
+                  setCurrentIndex={setCurrentIndex}
+                  maxIndex={newsData.length}
+              />
+
+              {/* Swipe indicator - Fixed position */}
+              <View style={styles.swipeIndicator}>
+                <Text style={styles.swipeText}>
+                  {currentIndex + 1} of {newsData.length} • Swipe to see more news
                 </Text>
               </View>
             </View>
-          </View>
-
-          {/* Footer - moved closer to bottom */}
-          <View style={styles.footer}>
-            <View style={styles.sideActions}>
-              <Feather name="heart" size={32} color="white" />
-            </View>
-            
-            <TouchableOpacity style={styles.followButton}>
-              <Text style={styles.followButtonText}>Follow News Source</Text>
-            </TouchableOpacity>
-            
-            <View style={styles.sideActions}>
-              <Entypo name="paper-plane" size={28} color="white" />
-            </View>
-          </View>
-        </View>
-      </SafeAreaView>
-    </LinearGradient>
+          </SafeAreaView>
+        </LinearGradient>
+      </View>
   );
 };
-
-const styles = StyleSheet.create({
-  fullScreen: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  container: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-  selectionBars: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingTop: 8,
-    paddingBottom: 12,
-    paddingHorizontal: 16, // Match main card margins
-  },
-  selectionBar: {
-    height: 3,
-    flex: 1,
-    borderRadius: 2,
-    marginHorizontal: 4,
-  },
-  activeBar: {
-    backgroundColor: 'white',
-  },
-  inactiveBar: {
-    backgroundColor: '#444',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingBottom: 12,
-  },
-  newsSource: {
-    color: 'white',
-    fontWeight: '600',
-    fontSize: 18,
-  },
-  headerIcons: {
-    flexDirection: 'row',
-  },
-  card: {
-    flex: 1,
-    borderRadius: 16,
-    overflow: 'hidden',
-    backgroundColor: '#2a2a2a', // Lighter background
-    marginBottom: 8, // Reduced margin to extend card down
-  },
-  imageSection: {
-    flex: 1, // Takes half of the card
-  },
-  imageContainer: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  image: {
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-  },
-  imageGradient: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    padding: 16,
-  },
-  titleContainer: {
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    borderRadius: 8, // Smaller radius
-    padding: 12, // Smaller padding to make it shorter
-    alignSelf: 'flex-start', // Make container width fit content
-    maxWidth: '80%', // Limit width to make it shorter
-  },
-  title: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
-    lineHeight: 22,
-  },
-  contentSection: {
-    flex: 1, // Takes other half of the card
-  },
-  contentContainer: {
-    backgroundColor: '#2a2a2a', // Lighter background
-    padding: 20,
-    flex: 1,
-  },
-  summary: {
-    color: '#E0E0E0',
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  attribution: {
-    color: '#888',
-    marginTop: 16,
-    fontSize: 12,
-  },
-  gist: {
-    color: '#4ade80',
-    fontWeight: 'bold',
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 8, // Reduced padding to move closer to bottom
-    paddingBottom: Platform.OS === 'ios' ? 0 : 8, // Even closer to bottom
-  },
-  sideActions: {
-    width: 60,
-    alignItems: 'center',
-  },
-  followButton: {
-    backgroundColor: 'white',
-    paddingVertical: 12,
-    paddingHorizontal: 32,
-    borderRadius: 12, // Smaller radius to show 4 corners clearly
-    flex: 1,
-    marginHorizontal: 16,
-    alignItems: 'center',
-  },
-  followButtonText: {
-    color: 'black',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-}); 
