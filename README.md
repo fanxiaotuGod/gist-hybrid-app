@@ -49,4 +49,7 @@ The hybrid approach works well when you want to share UI logic between platforms
 
 The key insight: put shared code in `packages/`, platform-specific stuff in `apps/`.
 
-## 
+## Screenshots
+
+![Android Screenshot](./android.png)
+![iOS Screenshot](./ios.png)
