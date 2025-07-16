@@ -51,5 +51,4 @@ The key insight: put shared code in `packages/`, platform-specific stuff in `app
 
 ## Screenshots
 
-![Android Screenshot](./android.png)
-![iOS Screenshot](./ios.png)
+<img src="./android.png" alt="Android" width="200"/> <img src="./ios.png" alt="iOS" width="215"/>
